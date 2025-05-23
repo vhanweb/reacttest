@@ -84,6 +84,34 @@ private void HandleOrderApproval(ApprovalRequest request)
 }
 ```
 
+[HttpPost]
+[ValidateAntiForgeryToken]
+public ActionResult Reject(int id)
+{
+    using (var transaction = db.Database.BeginTransaction())
+    {
+        try
+        {
+            var request = db.ApprovalRequests.Find(id);
+            if (request == null) return HttpNotFound();
+
+            // Add any cleanup logic here if needed
+            request.Status = "Rejected";
+            request.ApprovedById = User.Identity.GetUserId();
+            request.ApprovedDate = DateTime.Now;
+
+            db.SaveChanges();
+            transaction.Commit();
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            // Log error
+            return View("Error");
+        }
+    }
+    return RedirectToAction("Index");
+}
 ### Key Improvements:
 1. **Entity-Specific Handling**:
    - Uses `EntityName` to determine which entity to modify
